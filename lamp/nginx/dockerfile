@@ -1,0 +1,59 @@
+from alpine:3.10
+# nginx-1.6.1  nginx-1.9.9.tar.gz
+
+MAINTAINER mike "mike@365oa.com" 
+ 
+WORKDIR /
+copy dockerfile dockerfile
+
+##添加阿里云的源 当前alpine为3.10  在首行添加一行  
+#RUN apk add sed 
+#sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+RUN sed  -i '1i http://mirrors.aliyun.com/alpine/v3.10/community\n\n' /etc/apk/repositories
+RUN sed  -i '1i http://mirrors.aliyun.com/alpine/v3.10/main\n\n' /etc/apk/repositories
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+RUN  apk add  --no-cache wget g++ make gcc libxslt-dev openssl-dev  linux-headers  openssl 
+
+RUN addgroup -g 10001 -S nginx 
+RUN adduser nginx -u 20001 -D -S -s /bin/bash -G nginx
+
+RUN	mkdir /download 
+WORKDIR /download 
+
+#https://ftp.pcre.org/pub/pcre/pcre-8.43.tar.gz
+RUN wget https://ftp.pcre.org/pub/pcre/pcre-8.43.tar.gz
+RUN tar zxvf pcre-8.43.tar.gz
+RUN cd /download/pcre-8.43 && ./configure --prefix=/usr/local/pcre --enable-utf8 --enable-unicode-properties \
+&& make && make install 
+
+#Mainline version：Mainline是 Nginx 目前主力在做的版本，是开发版
+#Stable version：最新稳定版，生产环境上建议使用的版本  当前Stable 1.16.1
+#Legacy versions：遗留的老版本的稳定版
+#原来的生产环境  1.6.1 改用 当前Stable 1.16.1
+WORKDIR /download 
+RUN wget  http://nginx.org/download/nginx-1.16.1.tar.gz
+
+RUN tar zxvf nginx-1.16.1.tar.gz
+WORKDIR /download/nginx-1.16.1
+
+#将编译和make写到一起，负责报错
+RUN cd /download/nginx-1.16.1 && ./configure --user=nginx --group=nginx --with-pcre=/download/pcre-8.43 --prefix=/usr/local/nginx --with-http_stub_status_module  \
+--with-http_ssl_module  \
+--with-http_gzip_static_module  \
+--with-ipv6 \  
+&&  make && make install
+
+#-Werror: gcc将所有的警告当成错误进行处理
+#RUN sed -i  's/-Werror//g'  /download/nginx-1.6.1/objs/Makefile
+
+#ENTRYPOINT 具有优先权
+RUN rm -Rf /download/*
+RUN mkdir -p /var/log
+RUN nohup /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf > /var/log/nginx.log
+
+
+
+
+
+
