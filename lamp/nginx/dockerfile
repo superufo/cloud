@@ -111,10 +111,10 @@ EXPOSE 80
 EXPOSE 443
 EXPOSE 8080
 
-RUN mkdir -p /usr/local/nginx/conf/vhosts
-&&  chmod -R 777 /usr/local/nginx/conf/vhosts
+RUN mkdir -p /usr/local/nginx/conf/vhosts \
+&&  chmod -R 777 /usr/local/nginx/conf/vhosts \
 &&  echo "include vhosts/*.conf; " >> /usr/local/nginx/conf/nginx.conf \
-&&  echo "daemon off;" >> /usr/local/nginx/conf/nginx.conf
+&&  echo "daemon off;" >> /usr/local/nginx/conf/nginx.conf 
 ENTRYPOINT nohup /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf > /var/log/nginx.log
 
 
