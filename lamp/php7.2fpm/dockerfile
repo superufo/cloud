@@ -51,7 +51,7 @@ RUN mkdir -p /app/www/php
 RUN addgroup -g 10001 -S www-data 
 RUN adduser www-data -u 20001 -D -S -s /bin/bash -G www-data
 				 		 
-#PHP 安装			 
+#PHP 安装	 		 
 RUN wget https://www.php.net/distributions/php-7.1.33.tar.gz \
     && tar zxvf php-7.1.33.tar.gz \
 	&& cd php-7.1.33 \
@@ -91,8 +91,11 @@ RUN wget https://www.php.net/distributions/php-7.1.33.tar.gz \
 && cp -f /usr/local/php7/etc/php-fpm.conf.default  /usr/local/php7/etc/php-fpm.conf \
 && cp -f /usr/local/php7/etc/php-fpm.d/www.conf.default  /usr/local/php7/etc/php-fpm.d/www.conf 
 
-RUN sed -i 's/nobody/www-data/g' /usr/local/php7/etc/php-fpm.conf
-RUN sed -i 's/nobody/www-data/g' /usr/local/php7/etc/php-fpm.d/www.conf
+RUN sed -i 's/nobody/www-data/g' /usr/local/php7/etc/php-fpm.conf \
+    && sed -i 's/nobody/www-data/g' /usr/local/php7/etc/php-fpm.d/www.conf \
+	&& sed -i 's/;daemonize = yes/daemonize = no/g' /usr/local/php7/etc/php-fpm.conf \  
+	&& sed -i 's/127.0.0.1:9000/0.0.0.0:9000/g' /usr/local/php7/etc/php-fpm.conf \
+	&& sed -i 's/127.0.0.1:9000/0.0.0.0:9000/g' /usr/local/php7/etc/php-fpm.d/www.conf
 
 ENV PATH /usr/local/php7/bin:$PATH   
 ENV PATH /usr/local/php7/sbin:$PATH  
@@ -125,7 +128,8 @@ ENV PATH $COMPOSER_HOME/vendor/bin:$PATH
 
 RUN rm -Rf /download/* 
 WORKDIR /usr/local/bin 
-#RUN  php-fpm  -y /usr/local/php7/etc/php-fpm.conf
+EXPOSE 9000
+ENTRYPOINT  nohup  php-fpm -y /usr/local/php7/etc/php-fpm.conf > /tmp/php-fpm.log
 
 #alpine musl ENTRYPOINT问题  https://cloud.tencent.com/developer/ask/174617
 #COPY ld-musl-x86_64.pat /etc/ld-musl-x86_64.pat

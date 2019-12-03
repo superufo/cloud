@@ -17,19 +17,20 @@ RUN  apk add  --no-cache wget g++ gcc libxslt-dev openssl-dev linux-headers
 RUN	mkdir /download 
 WORKDIR /download 
   
-RUN  apk add --no-cache make 	
+RUN  apk add make 	
 RUN wget http://download.redis.io/releases/redis-4.0.14.tar.gz \
      && tar zxvf redis-4.0.14.tar.gz \ 
 	 && cd redis-4.0.14 \
 	 && make \
 	 && make install 
 	 
-RUN cp  /download/redis-4.0.14/redis.conf  /etc/redis.conf	 
-
-RUN sed -i 's/bind 127.0.0.1/bind 0.0.0.0/g' /etc/redis.conf	
-
+RUN cp  /download/redis-4.0.14/redis.conf  /etc/redis.conf \	 
+    && sed -i 's/bind 127.0.0.1/bind 0.0.0.0/g' /etc/redis.conf \
+    && sed -i 's/protected-mode yes/protected-mode no/g' /etc/redis.conf	
+   
 RUN rm -Rf /download/*	 
 WORKDIR /usr/local/bin
 
-entrypoint /usr/local/bin/redis-server /etc/redis.conf 
+EXPOSE 6379
+ENTRYPOINT /usr/local/bin/redis-server /etc/redis.conf 
 #ENV  REDIS_HOME=/usr/local/bin
