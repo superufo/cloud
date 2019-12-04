@@ -17,6 +17,7 @@ volumes:
 
 services:
 
+  #./php7.2fpm/etc/php.ini:/etc/php.ini
   php7.2fpm: 
     build: ./php7.2fpm
     container_name: php7.2fpm
@@ -29,8 +30,8 @@ services:
       - mysql-db
       - redis
     volumes:
-      - ./php7.2fpm/etc/php.ini:/etc/php.ini
-      - ./php7.2fpm/php-fpm.d/*:/usr/local/php7/etc/php-fpm.d/* 
+      - ./php7.2fpm/etc/php.ini:/etc/php.ini#:rw
+      - ./php7.2fpm/php-fpm.d/*:/usr/local/php7/etc/php-fpm.d/*#:rw
     networks:
       - lnmp-net  
     restart: always
@@ -56,12 +57,15 @@ services:
       MYSQL_PASSWORD: 123456 
     networks:
       - lnmp-net       
-       
+  
+  #./redis/conf/redis.conf:/etc/redis.conf 
+  # ./redis/run/redis_6379.pid:/var/run/redis_6379.pid 
   redis:
     build: ./redis/ 
     container_name: redis 
     volumes:
-      - ./redis/conf/redis.conf:/etc/redis.conf     
+      - ./redis/conf:/etc 
+      - ./redis/run:/var/run    
     ports:
       - "6379:6379"
     networks:
