@@ -1,0 +1,100 @@
+# PHP LNMP
+#Centos  Centos 7.4
+#Nginx nginx-1.6.1
+#PHP PHP-7.0.33
+#MySQL MySQL-5.7.35
+#Redis Redis-4.0.14
+#Jenkins 2.164.3
+#mongdb 
+# #network_mode: bridge
+version: '3'
+ 
+networks:
+  lnmp-overlay:
+    driver: overlay
+    
+volumes:
+  dbdata:
+
+services:
+
+  #./php7.2fpm/etc/php.ini:/etc/php.ini
+  php7.2fpm: 
+    build: ./php7.2fpm
+    container_name: php7.2fpm
+    ports:
+      - "9000:9000"  
+    links: 
+      - mysql-db:mysql-db
+      - redis:redis       
+    depends_on:
+      - mysql-db
+      - redis
+    volumes:
+      - ./php7.2fpm/etc/php.ini:/etc/php.ini#:rw
+      - ./php7.2fpm/php-fpm.d/*:/usr/local/php7/etc/php-fpm.d/*#:rw
+    networks:
+      - lnmp-overlay
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure      
+    restart: always
+    command: php-fpm  
+    
+  mysql-db:
+    image: mysql:5.7.28
+    container_name: mysql-db
+    ports:
+      - "3306:3306"  
+      - "33060:33060"
+    command:
+      - --default_authentication_plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci     
+    volumes:
+      - dbdata:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: gshop  
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 123456 
+    networks:
+      - lnmp-overlay
+    deploy:
+      placement:
+        constraints:[node.role == manager]       
+  
+  #./redis/conf/redis.conf:/etc/redis.conf 
+  # ./redis/run/redis_6379.pid:/var/run/redis_6379.pid 
+  redis:
+    build: ./redis/ 
+    container_name: redis 
+    volumes:
+      - ./redis/conf:/etc 
+      - ./redis/run:/var/run    
+    ports:
+      - "6379:6379"
+    networks:
+      - lnmp-overlay   
+      
+  nginx:
+    build: ./nginx/
+    container_name: nginx
+    links: 
+      - php7.2fpm:php7.2fpm
+    depends_on:
+      - php7.2fpm  
+    ports:
+      - "80:80"  
+      - "8080:8080"
+      - "443:443"
+    volumes:
+      - ./nginx/conf/vhost:/usr/local/nginx/conf/vhost 
+      - ./nginx/app/www/php:/app/www/php
+    networks:
+      - lnmp-overlay  

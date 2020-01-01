@@ -1,0 +1,35 @@
+from alpine:3.10
+MAINTAINER mike "mike@365oa.com" 
+ 
+WORKDIR /
+copy dockerfile dockerfile
+
+##添加阿里云的源 当前alpine为3.10  在首行添加一行  
+#RUN apk add sed 
+RUN sed  -i '1i http://mirrors.aliyun.com/alpine/v3.10/community\n\n' /etc/apk/repositories
+RUN sed  -i '1i http://mirrors.aliyun.com/alpine/v3.10/main\n\n' /etc/apk/repositories
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+#apk update python3-dev
+RUN  apk add  --no-cache wget g++ gcc libxslt-dev openssl-dev linux-headers  
+
+#Redis-4.0.14
+RUN	mkdir /download 
+WORKDIR /download 
+  
+RUN  apk add make 	
+RUN wget http://download.redis.io/releases/redis-4.0.14.tar.gz \
+     && tar zxvf redis-4.0.14.tar.gz \ 
+	 && cd redis-4.0.14 \
+	 && make \
+	 && make install 
+	 
+RUN cp  /download/redis-4.0.14/redis.conf  /etc/redis.conf	 
+
+RUN sed -i 's/bind 127.0.0.1/bind 0.0.0.0/g' /etc/redis.conf	
+
+RUN rm -Rf /download/*	 
+WORKDIR /usr/local/bin
+
+CMD /usr/local/bin/redis-server /etc/redis.conf&
+#ENV  REDIS_HOME=/usr/local/bin

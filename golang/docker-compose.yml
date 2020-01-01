@@ -1,0 +1,31 @@
+# PHP LNMP
+#Centos：Centos 7.4
+#Nginx：nginx-1.6.1
+#PHP：PHP-7.0.33
+#MySQL：MySQL-5.7.35
+#Redis：Redis-4.0.14
+#Jenkins：2.164.3
+#mongdb还没有
+#
+version: '2'
+
+services:
+
+  php56-fpm: 
+    build: ./php5.6fpm/
+    ports:
+      - "80:80"  
+      - "8080:8080"
+      - "443:443"
+    links: 
+      - mysql-db:mysql-db
+      - redis:redis       
+    depend_on:
+      - mysql-db
+      - redis
+    volumns:
+      - ./php5.6fpm/ngnix:/usr/local/ngnix
+      - ./php5.6.fpm/code:/app/www/php
+    restart: always
+    command: php-fpm      
+            
